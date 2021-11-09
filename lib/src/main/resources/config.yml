@@ -1,0 +1,35 @@
+discord:
+  token: "YOUR TOKEN HERE"
+  channel: 0 # Your channel id here
+  prefix: "%mc " # Discord command prefix
+  webhook: "https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Webhook URL here
+  chat_name: "[MC] %d" # %d replaced to Discord name, %m replaced to MCID. If doesn't link, will use MCID.
+minecraft:
+  chat_format: "[Discord] <%m> %t" # %d will be replaced to Discord name, %m will be replaced to MCID. If doesn't link, they will be replaced MCID. %t replaced to message.
+  chat_format_embed: "[Discord(with embed)] <%m> %t"
+chat_format:
+  discord: # MC -> Discord
+    linked_name: "[MC] %d" # %d replaced to Discord name, %m replaced to MCID.
+    unlinked_name: "[MC] %m" # %m replaced to MCID.
+  minecraft: # Discord -> MC
+  # %d replaced to Discord name. %m replaced to MCID. %t replaced to message text.
+    normal:
+      linked: "[Discord] <%m> %t" 
+      unlinked: "[Discord] <%d> %t"
+    attachment:
+      linked: "[Discord attachment] <%m> %t"
+      unlinked: "[Discord attachment] <%d> %t"
+    reply:
+      # %rt replaced to replyed message text.
+      # %rd replaced to replyed user Discord name.
+      # %rm replaced to MCID. If don't linked, empty.
+      # %rn replaced to name. If linked MCID, else, Discord name.
+      linked: "[Discord reply] <%m> %t"
+      unlinked: "[Discord reply] <%d> %t"
+    reply_attachment:
+      linked: "[Discord reply attachment] <%m> %t"
+      unlinked: "[Discord reply attachment] <%d> %t"
+link:
+  tokenExpire: 300 # Link token available limit
+database:
+  name: "db.sqlite" # SQLite database name

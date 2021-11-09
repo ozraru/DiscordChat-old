@@ -1,0 +1,36 @@
+name: DiscordChat
+main: work.raru.spigot.discordchat.Main
+version: 1.0.0
+author: ozraru
+api-version: 1.16
+commands:
+  discordchat:
+    description: DiscordChat Command
+    permission: discordchat.command
+    aliases: [dc, dchat]
+    usage: /discordchat
+permissions:
+  discordchat.command:
+    description: Minimum permission to use /discordchat. Everyone have this permission in default.
+    default: true
+  discordchat.command.link:
+    description: Permission to use /discordchat link. Needs discordchat.link too. Everyone have this permission in default.
+    default: true
+  discordchat.link:
+    description: Permission to link Discord. Needs discordchat.command.link or discordchat.link.login. Everyone have this permission in default.
+    default: true
+  discordchat.link.login:
+    description: Permission to link when login if don't have discordchat.login. Everyone have this permission in default.
+    default: true
+  discordchat.recieve:
+    description: Permission to recieve message from Discord. Everyone have this permission in default.
+    default: true
+  discordchat.send:
+    description: Permission to transport message to Discord. Everyone have this permission in default.
+    default: true
+  discordchat.login:
+    description: Permission to login. Everyone have this permission in default. If you prevent from unlink user, take this permission.
+    default: true
+  discordchat.login.linked:
+    description: Permission to login when linked. Everyone have this permission in default.
+    default: true
