@@ -58,8 +58,13 @@ public class MinecraftChat implements Listener {
 				e.printStackTrace();
 			}
 			content = content.replaceAll("%rm", "");
-			content = content.replaceAll("%rn", referencedMessage.getMember().getEffectiveName());
-			content = content.replaceAll("%rd", referencedMessage.getMember().getEffectiveName());
+			if (referencedMessage.getMember() == null) {
+				content = content.replaceAll("%rn", referencedMessage.getAuthor().getName());
+				content = content.replaceAll("%rd", referencedMessage.getAuthor().getName());
+			} else {
+				content = content.replaceAll("%rn", referencedMessage.getMember().getEffectiveName());
+				content = content.replaceAll("%rd", referencedMessage.getMember().getEffectiveName());
+			}
 			content = content.replaceAll("%rt", referencedMessage.getContentDisplay());
 		}
 		content = EmojiParser.parseToAliases(content);

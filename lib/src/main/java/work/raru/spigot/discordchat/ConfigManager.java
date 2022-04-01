@@ -38,9 +38,21 @@ public class ConfigManager {
 	static int getTokenExpire() {
 		return config.getInt("link.tokenExpire");
 	}
-	
-	static String getDatabaseName() {
-		return config.getString("database.name");
+
+	static String getDatabaseType() {
+		return config.getString("database.type");
+	}
+	static String getDatabaseUrl() {
+		return config.getString("database.url");
+	}
+	static String getDatabaseUser() {
+		return config.getString("database.user");
+	}
+	static String getDatabasePassword() {
+		return config.getString("database.password");
+	}
+	static String getDatabaseTablePrefix() {
+		return config.getString("database.table_prefix");
 	}
 	
 //	static ConfigurationSection getMinecraftConvert() {

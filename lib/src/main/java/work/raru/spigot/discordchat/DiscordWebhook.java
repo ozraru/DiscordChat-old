@@ -1,13 +1,7 @@
 package work.raru.spigot.discordchat;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import javax.net.ssl.HttpsURLConnection;
 
 import com.google.gson.JsonObject;
@@ -19,7 +13,7 @@ import com.google.gson.JsonPrimitive;
  * edited by ozraru
  *
  */
-public class DiscordWebhook {
+public class DiscordWebhook implements Runnable {
 
     private final String url;
     private String content;
@@ -51,33 +45,42 @@ public class DiscordWebhook {
     public void setTts(boolean tts) {
         this.tts = tts;
     }
+    
+    @Override
+    public void run() {
+    	try {
+            if (this.content == null) {
+                throw new IllegalArgumentException("Set content");
+            }
 
-    public void execute() throws IOException {
-        if (this.content == null) {
-            throw new IllegalArgumentException("Set content");
-        }
+            JsonObject json = new JsonObject();
 
-        JsonObject json = new JsonObject();
+            json.add("content", new JsonPrimitive(this.content));
+            if (this.username != null) {
+                json.add("username", new JsonPrimitive(this.username));
+            }
+            if (this.avatarUrl != null) {
+                json.add("avatar_url", new JsonPrimitive(this.avatarUrl));
+            }
+            json.add("tts", new JsonPrimitive(this.tts));
 
-        json.add("content", new JsonPrimitive(this.content));
-        json.add("username", new JsonPrimitive(this.username));
-        json.add("avatar_url", new JsonPrimitive(this.avatarUrl));
-        json.add("tts", new JsonPrimitive(this.tts));
+            URL url = new URL(this.url);
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            connection.addRequestProperty("Content-Type", "application/json");
+            connection.addRequestProperty("User-Agent", "Java-DiscordWebhook-BY-Gelox_");
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
 
-        URL url = new URL(this.url);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-        connection.addRequestProperty("Content-Type", "application/json");
-        connection.addRequestProperty("User-Agent", "Java-DiscordWebhook-BY-Gelox_");
-        connection.setDoOutput(true);
-        connection.setRequestMethod("POST");
+            OutputStream stream = connection.getOutputStream();
+            stream.write(json.toString().getBytes());
+            stream.flush();
+            stream.close();
 
-        OutputStream stream = connection.getOutputStream();
-        stream.write(json.toString().getBytes());
-        stream.flush();
-        stream.close();
-
-        connection.getInputStream().close(); //I'm not sure why but it doesn't work without getting the InputStream
-        connection.disconnect();
+            connection.getInputStream().close(); //I'm not sure why but it doesn't work without getting the InputStream
+            connection.disconnect();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
     }
 
 //    private class JSONObject {

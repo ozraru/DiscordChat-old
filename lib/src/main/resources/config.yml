@@ -1,12 +1,9 @@
 discord:
   token: "YOUR TOKEN HERE"
-  channel: 0 # Your channel id here
+  channel: 000000000000000000 # Your channel id here (threadID is allowed)
   prefix: "%mc " # Discord command prefix
   webhook: "https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Webhook URL here
-  chat_name: "[MC] %d" # %d replaced to Discord name, %m replaced to MCID. If doesn't link, will use MCID.
-minecraft:
-  chat_format: "[Discord] <%m> %t" # %d will be replaced to Discord name, %m will be replaced to MCID. If doesn't link, they will be replaced MCID. %t replaced to message.
-  chat_format_embed: "[Discord(with embed)] <%m> %t"
+  # webhook: "https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX?thread_id=XXXXXXXXXXXXXXXXXX" # For thread
 chat_format:
   discord: # MC -> Discord
     linked_name: "[MC] %d" # %d replaced to Discord name, %m replaced to MCID.
@@ -16,9 +13,6 @@ chat_format:
     normal:
       linked: "[Discord] <%m> %t" 
       unlinked: "[Discord] <%d> %t"
-    attachment:
-      linked: "[Discord attachment] <%m> %t"
-      unlinked: "[Discord attachment] <%d> %t"
     reply:
       # %rt replaced to replyed message text.
       # %rd replaced to replyed user Discord name.
@@ -26,10 +20,18 @@ chat_format:
       # %rn replaced to name. If linked MCID, else, Discord name.
       linked: "[Discord reply] <%m> %t"
       unlinked: "[Discord reply] <%d> %t"
+    attachment:
+      linked: "[Discord attachment] <%m> %t"
+      unlinked: "[Discord attachment] <%d> %t"
     reply_attachment:
       linked: "[Discord reply attachment] <%m> %t"
       unlinked: "[Discord reply attachment] <%d> %t"
 link:
-  tokenExpire: 300 # Link token available limit
+  tokenExpire: 300 # Link token available limit(second)
 database:
-  name: "db.sqlite" # SQLite database name
+  table_prefix: "dc_"
+  type: sqlite # sqlite or postgresql
+  url: "jdbc:sqlite:./plugins/DiscordChat/db.sqlite" # SQLite
+  # url: "jdbc:postgresql://localhost/DiscordChat" # PostgreSQL
+  # user: "postgres_user"
+  # password: "pastgres_password"

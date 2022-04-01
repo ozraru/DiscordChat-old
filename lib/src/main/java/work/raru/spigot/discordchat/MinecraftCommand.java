@@ -1,15 +1,25 @@
 package work.raru.spigot.discordchat;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.login.LoginException;
+
 import org.apache.commons.lang.RandomStringUtils;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import net.dv8tion.jda.api.JDA.Status;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 
-public class MinecraftCommand implements CommandExecutor {
+public class MinecraftCommand implements CommandExecutor, TabCompleter {
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 		if (args.length < 1 || args[0].equals("help")) {
@@ -25,74 +35,83 @@ public class MinecraftCommand implements CommandExecutor {
 			if (sender.hasPermission("discordchat.command.restart")) {
 				sender.sendMessage(label + " restart: Restart JDA");
 			}
+			if (sender.hasPermission("discordchat.command.emojiful")) {
+				sender.sendMessage(label + " emojiful: Generate emojiful resource pack");
+			}
 			sender.sendMessage(label + " help: Show this message");
 			return true;
 		}
-		switch (args[0]) {
-		case "link": {
-			OfflinePlayer target;
-			if (!sender.hasPermission("discordchat.command.link")) {
-				sender.sendMessage("You don't have permission: discordchat.link");
-				return true;
-			}
-			if (!sender.hasPermission("discordchat.link")) {
-				sender.sendMessage("You don't have permission: discordchat.link");
-				return true;
-			}
-			switch (args.length) {
-			case 1:
-				if (sender instanceof Player) {
-					target = (Player) sender;
-					break;
-				} else {
-					return false;
-				}
-			case 2:
-				if (!sender.hasPermission("discordchat.link.other")) {
-					sender.sendMessage("You don't have permission: discordchat.link.other");
+		try {
+			switch (args[0]) {
+			case "link": {
+				OfflinePlayer target;
+				if (!sender.hasPermission("discordchat.command.link")) {
+					sender.sendMessage("You don't have permission: discordchat.link");
 					return true;
 				}
-				target = Utilitys.getPlayer(args[1]);
-				if (target == null) {
-					sender.sendMessage("Not found User");
+				if (!sender.hasPermission("discordchat.link")) {
+					sender.sendMessage("You don't have permission: discordchat.link");
+					return true;
+				}
+				switch (args.length) {
+				case 1:
+					if (sender instanceof Player) {
+						target = (Player) sender;
+						break;
+					} else {
+						return false;
+					}
+				case 2:
+					if (!sender.hasPermission("discordchat.link.other")) {
+						sender.sendMessage("You don't have permission: discordchat.link.other");
+						return true;
+					}
+					target = Utilitys.getPlayer(args[1]);
+					if (target == null) {
+						sender.sendMessage("Not found User");
+						return false;
+					}
+					break;
+				default:
 					return false;
 				}
-				break;
-			default:
-				return false;
+				String token = RandomStringUtils.randomNumeric(6);
+				int expirationSeconds = ConfigManager.getTokenExpire();
+				try {
+					UserLinkManager.linkQueue(target.getUniqueId(), token, expirationSeconds);
+					String commandText = ConfigManager.getDiscordPrefix() + "link " + token;
+					String messageText = String.format(
+							"Please send '%s' in discord #%s or %s's DM in %d seconds (click here to copy command)",
+							commandText, DiscordMessage.getChannel().getName(),
+							DiscordMessage.getChannel().getGuild().getSelfMember().getEffectiveName(),
+							expirationSeconds);
+					TextComponent message = new TextComponent(messageText);
+					message.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, commandText));
+					sender.spigot().sendMessage(message);
+					return true;
+				} catch (Exception e) {
+					sender.sendMessage("Error Link queue");
+					e.printStackTrace();
+					DatabaseManager.cancel();
+					return true;
+				}
 			}
-			String token = RandomStringUtils.randomNumeric(6);
-			int expirationSeconds = ConfigManager.getTokenExpire();
-			try {
-				UserLinkManager.linkQueue(target.getUniqueId(), token, expirationSeconds);
-				sender.sendMessage(
-						"Please send '" + ConfigManager.getDiscordPrefix() + "link " + token + "' in discord channnel #"
-								+ DiscordMessage.getChannel().getName() + " or DM in " + expirationSeconds + " seconds");
-				return true;
-			} catch (Exception e) {
-				sender.sendMessage("Error Link queue");
-				e.printStackTrace();
-				DatabaseManager.cancel();
-				return true;
-			}
-		}
-		case "reload": {
-			if (!sender.hasPermission("discordchat.command.reload")) {
-				sender.sendMessage("You don't have permission: discordchat.command.reload");
-				return true;
-			}
-			ConfigManager.reload();
-			sender.sendMessage("Successfully reloaded");
-			return true;
-		}
-		case "restart": {
-			if (!sender.hasPermission("discordchat.command.restart")) {
-				sender.sendMessage("You don't have permission: discordchat.command.restart");
+			case "reload": {
+				if (!sender.hasPermission("discordchat.command.reload")) {
+					sender.sendMessage("You don't have permission: discordchat.command.reload");
+					return true;
+				}
+				ConfigManager.reload();
+				sender.sendMessage("Successfully reloaded");
 				return true;
 			}
-			sender.sendMessage("Stopping JDA...");
-			Main.instance.jda.shutdown();
-			try {
+			case "restart": {
+				if (!sender.hasPermission("discordchat.command.restart")) {
+					sender.sendMessage("You don't have permission: discordchat.command.restart");
+					return true;
+				}
+				sender.sendMessage("Stopping JDA...");
+				Main.instance.jda.shutdown();
 				for (int i = 0; i < 30; i++) {
 					if (Main.instance.jda.getStatus().equals(Status.SHUTDOWN)) {
 						sender.sendMessage("Successfully shutdowned. Starting JDA...");
@@ -103,17 +122,62 @@ public class MinecraftCommand implements CommandExecutor {
 					}
 					Thread.sleep(100);
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				sender.sendMessage("Unexpected interrupt.");
+				sender.sendMessage("Shutdown timeout.s");
 				return true;
 			}
-			sender.sendMessage("Shutdown timeout.s");
+			case "emojiful":
+				if (!sender.hasPermission("discordchat.command.emojiful")) {
+					sender.sendMessage("You don't have permission: discordchat.command.emojiful");
+					return true;
+				}
+				EmojifulGenerator.generate();
+				sender.sendMessage("Successfully generated emojiful datapack.");
+				TextComponent message = new TextComponent("Click here to /datapack enable discordchat");
+				message.setClickEvent(
+						new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/datapack enable discordchat"));
+				sender.spigot().sendMessage(message);
+				return true;
+			default:
+				sender.sendMessage("Invalid subcommand. To check usage, use: " + label + " help");
+				return true;
+			}
+		} catch (IOException | LoginException | InterruptedException e) {
+			e.printStackTrace();
+			sender.sendMessage("Unknown error has occured: " + e.getMessage());
+			sender.sendMessage("Stacktrace is available in server console.");
 			return true;
 		}
-		default:
-			sender.sendMessage("Invalid subcommand. To check usage, use: " + label + " help");
-			return true;
+	}
+
+	@Override
+	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+		ArrayList<String> result = new ArrayList<String>();
+		if (args.length == 1) {
+			if (sender.hasPermission("discordchat.command.link") && sender.hasPermission("discordchat.link")) {
+				result.add("link");
+			}
+			if (sender.hasPermission("discordchat.command.reload")) {
+				result.add("reload");
+			}
+			if (sender.hasPermission("discordchat.command.restart")) {
+				result.add("restart");
+			}
+			if (sender.hasPermission("discordchat.command.restart")) {
+				result.add("emojiful");
+			}
+			result.add("help");
 		}
+		if (args.length == 2) {
+			if (args[1].equals("link")) {
+				if (sender.hasPermission("discordchat.command.link")
+						&& sender.hasPermission("discordchat.link.other")) {
+					return null; // Can specify player
+				} else {
+					// Nothing arguments to add
+				}
+			}
+			// Other, Nothing arguments to add
+		}
+		return result;
 	}
 }

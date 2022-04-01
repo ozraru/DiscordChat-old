@@ -1,6 +1,5 @@
 package work.raru.spigot.discordchat;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -14,31 +13,49 @@ import java.util.UUID;
 public class DatabaseManager {
 	static Connection conn;
 
-	static void init(File DataDirectory) {
-		try {
-			initConnection(DataDirectory);
-			initTable("LinkList(" + "minecraft CHAR(36) NOT NULL," + "discord BIGINT NOT NULL)");
-			initTable("LinkToken(" + "minecraft CHAR(36) NOT NULL," + "token VARCHAR(12) NOT NULL,"
-					+ "expireTimeStamp TIMESTAMP NOT NULL)");
+	static void init() throws SQLException {
+		initConnection();
+		String linkListTableName = ConfigManager.getDatabaseTablePrefix() + "LinkList";
+		String linkTokenTableName = ConfigManager.getDatabaseTablePrefix() + "LinkToken";
+		initTable(linkListTableName + "(" + "minecraft CHAR(36) NOT NULL," + "discord BIGINT NOT NULL)");
+		initTable(linkTokenTableName + "(" + "minecraft CHAR(36) NOT NULL," + "token VARCHAR(12) NOT NULL,"
+				+ "expireTimeStamp TIMESTAMP NOT NULL)");
 
-			cleanupStatement = conn.prepareStatement("DELETE FROM LinkToken WHERE expireTimeStamp > ?");
-			createTokenStatement = conn
-					.prepareStatement("INSERT INTO LinkToken (minecraft,token,expireTimeStamp) VALUES (?,?,?)");
-			useTokenStatement = conn.prepareStatement("SELECT minecraft FROM LinkToken WHERE token = ?");
-			removeTokenStatement = conn.prepareStatement("DELETE FROM LinkToken WHERE token = ?");
-			addLinkStatement = conn.prepareStatement("INSERT INTO LinkList (minecraft,discord) VALUES (?,?)");
-			getMinecraftStatement = conn.prepareStatement("SELECT minecraft FROM LinkList WHERE discord = ?");
-			getDiscordStatement = conn.prepareStatement("SELECT discord FROM LinkList WHERE minecraft = ?");
-			removeLinkMinecraftStatement = conn.prepareStatement("DELETE FROM LinkList WHERE minecraft = ?");
-			removeLinkDiscordStatement = conn.prepareStatement("DELETE FROM LinkList WHERE discord = ?");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+		cleanupStatement = conn.prepareStatement("DELETE FROM " + linkTokenTableName + " WHERE expireTimeStamp > ?");
+		createTokenStatement = conn.prepareStatement(
+				"INSERT INTO " + linkTokenTableName + " (minecraft,token,expireTimeStamp) VALUES (?,?,?)");
+		useTokenStatement = conn.prepareStatement("SELECT minecraft FROM " + linkTokenTableName + " WHERE token = ?");
+		removeTokenStatement = conn.prepareStatement("DELETE FROM " + linkTokenTableName + " WHERE token = ?");
+		addLinkStatement = conn
+				.prepareStatement("INSERT INTO " + linkListTableName + " (minecraft,discord) VALUES (?,?)");
+		getMinecraftStatement = conn
+				.prepareStatement("SELECT minecraft FROM " + linkListTableName + " WHERE discord = ?");
+		getDiscordStatement = conn
+				.prepareStatement("SELECT discord FROM " + linkListTableName + " WHERE minecraft = ?");
+		removeLinkMinecraftStatement = conn
+				.prepareStatement("DELETE FROM " + linkListTableName + " WHERE minecraft = ?");
+		removeLinkDiscordStatement = conn.prepareStatement("DELETE FROM " + linkListTableName + " WHERE discord = ?");
 	}
 
-	static void initConnection(File DataDirectory) throws SQLException {
-		String path = DataDirectory.getAbsolutePath() + "/" + ConfigManager.getDatabaseName();
-		conn = DriverManager.getConnection("jdbc:sqlite:" + path);
+	static void initConnection() throws SQLException {
+		try {
+			switch (ConfigManager.getDatabaseType()) {
+			case "postgresql":
+				Class.forName("org.postgresql.Driver");
+				conn = DriverManager.getConnection(ConfigManager.getDatabaseUrl(), ConfigManager.getDatabaseUser(),
+						ConfigManager.getDatabasePassword());
+				break;
+			case "sqlite":
+				Class.forName("org.sqlite.JDBC");
+				conn = DriverManager.getConnection(ConfigManager.getDatabaseUrl());
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown database type");
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		conn.setAutoCommit(false);
 	}
 
