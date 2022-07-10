@@ -8,11 +8,10 @@ import javax.annotation.Nullable;
 
 import org.bukkit.entity.Player;
 
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -113,28 +112,28 @@ public class DiscordMessage extends ListenerAdapter {
 		String[] splitMessage = message.split(":");
 		StringBuilder content = new StringBuilder(splitMessage[0]);
 		for (int i = 1; i < splitMessage.length; i++) {
-			List<Emote> emotes = getChannel().getJDA().getEmotesByName(splitMessage[i], true);
-			if (emotes.isEmpty()) {
+			List<RichCustomEmoji> emojis = getChannel().getJDA().getEmojisByName(splitMessage[i], true);
+			if (emojis.isEmpty()) {
 				content.append(":" + splitMessage[i]);
 				if (i == splitMessage.length - 1 && message.endsWith(":")) {
 					content.append(":");
 				}
 				continue;
 			}
-			if (emotes.size() == 1) {
-				content.append(emotes.get(0).getAsMention());
+			if (emojis.size() == 1) {
+				content.append(emojis.get(0).getAsMention());
 				continue;
 			}
 			boolean selected = false;
-			for (Emote emote : emotes) {
-				if (emote.getGuild().equals(getChannel().getGuild())) {
-					content.append(emote.getAsMention());
+			for (RichCustomEmoji emoji : emojis) {
+				if (emoji.getGuild().equals(getChannel().getGuild())) {
+					content.append(emoji.getAsMention());
 					selected = true;
 					break;
 				}
 			}
 			if (!selected) {
-				content.append(emotes.get(0).getAsMention());
+				content.append(emojis.get(0).getAsMention());
 			}
 		}
 

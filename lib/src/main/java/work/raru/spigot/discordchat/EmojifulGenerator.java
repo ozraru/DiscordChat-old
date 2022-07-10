@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 
 public class EmojifulGenerator {
 	private static final String TEMPLATE = "{\n"
@@ -39,8 +39,8 @@ public class EmojifulGenerator {
 		FileOutputStream destMcmeta = new FileOutputStream(new File(pack_dir, "pack.mcmeta"), false);
 		destMcmeta.write(sourceMcmeta.readAllBytes());
 		// get emotes and save it
-		List<Emote> emotes = DiscordMessage.getChannel().getGuild().getEmotes();
-		for (Emote emote : emotes) {
+		List<RichCustomEmoji> emotes = DiscordMessage.getChannel().getGuild().getEmojis();
+		for (RichCustomEmoji emote : emotes) {
 			String jsonData = TEMPLATE.replace("{url}",emote.getImageUrl());
 			jsonData = jsonData.replace("{name}", emote.getName());
 			jsonData = jsonData.replace("{category}", emote.getGuild().getName());

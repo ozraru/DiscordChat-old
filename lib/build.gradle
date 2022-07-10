@@ -46,7 +46,9 @@ dependencies {
     
     compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
     
-    implementation("net.dv8tion:JDA:5.0.+")
+    implementation("net.dv8tion:JDA:5.0.+") {
+        exclude module: 'opus-java'
+    }
     
     implementation 'org.xerial:sqlite-jdbc:3.8.11.2'
     
