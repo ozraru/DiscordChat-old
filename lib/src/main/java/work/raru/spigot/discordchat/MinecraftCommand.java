@@ -110,19 +110,34 @@ public class MinecraftCommand implements CommandExecutor, TabCompleter {
 					sender.sendMessage("You don't have permission: discordchat.command.restart");
 					return true;
 				}
-				sender.sendMessage("Stopping JDA...");
-				Main.instance.jda.shutdown();
-				for (int i = 0; i < 30; i++) {
-					if (Main.instance.jda.getStatus().equals(Status.SHUTDOWN)) {
-						sender.sendMessage("Successfully shutdowned. Starting JDA...");
-						Main.instance.startJDA();
-						Main.instance.jda.awaitReady();
-						sender.sendMessage("JDA started.");
-						return true;
+				sender.sendMessage("Shutdowning JDA...");
+				try {
+					Main.instance.jda.shutdown();
+					boolean shutdowned = false;
+					for (int i = 0; i < 30; i++) {
+						if (Main.instance.jda.getStatus().equals(Status.SHUTDOWN)) {
+							shutdowned = true;
+							break;
+						}
+						Thread.sleep(100);
 					}
-					Thread.sleep(100);
+					if (shutdowned) {
+						sender.sendMessage("JDA successfully shutdowned");
+					} else {
+						sender.sendMessage("shutdown timeout. Force shutdown...");
+						Main.instance.jda.shutdownNow();
+						sender.sendMessage("Force shutdown requested.");
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					sender.sendMessage("Unknown error has occured while shutdown JDA: " + e.getMessage());
+					sender.sendMessage("Stacktrace is available in server console.");
+					sender.sendMessage("Ignore and continue restart...");
 				}
-				sender.sendMessage("Shutdown timeout.s");
+				sender.sendMessage("Starting JDA...");
+				Main.instance.startJDA();
+				Main.instance.jda.awaitReady();
+				sender.sendMessage("JDA started.");
 				return true;
 			}
 			case "emojiful":
