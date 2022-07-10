@@ -147,9 +147,11 @@ public class MinecraftCommand implements CommandExecutor, TabCompleter {
 				}
 				EmojifulGenerator.generate();
 				sender.sendMessage("Successfully generated emojiful datapack.");
-				TextComponent message = new TextComponent("Click here to /datapack enable discordchat");
+				TextComponent message = new TextComponent("Click here to '/datapack enable \"file/discordchat\"'");
 				message.setClickEvent(
-						new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/datapack enable discordchat"));
+						new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/datapack enable \"file/discordchat\""));
+				sender.spigot().sendMessage(message);
+				message.setText("Warning: this command may cause client freeze few seconds");
 				sender.spigot().sendMessage(message);
 				return true;
 			default:
