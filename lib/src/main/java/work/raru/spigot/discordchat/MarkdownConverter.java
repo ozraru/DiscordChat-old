@@ -3,8 +3,8 @@ package work.raru.spigot.discordchat;
 import java.util.HashMap;
 
 /**
- * I wrote this.
- * But I can't read this :P
+ * I wrote this. But I can't read this :P
+ * 
  * @author ozraru
  *
  */
@@ -14,31 +14,67 @@ public class MarkdownConverter {
 	private static final int ITALIC = 2;
 	private static final int STRIKE = 3;
 	private static final int UNDER = 4;
-	
+
 	public static void main(String[] args) {
 		System.out.println(toMinecraft(args[0]));
 	}
-	
+
 	static String toMinecraft(String markdown) {
 		int boldPos = -1;
 		int italicPos = -1;
 		int strikePos = -1;
 		int underPos = -1;
-		HashMap<Integer,Deco> decos = new HashMap<Integer,Deco>();
+		int boldItalicPos = -1;
+		HashMap<Integer, Deco> decos = new HashMap<Integer, Deco>();
 		for (int i = 0; i < markdown.length(); i++) {
 			int clearPos = -1;
 			switch (markdown.charAt(i)) {
 			case '*':
-				if (markdown.length() > i+1 && markdown.charAt(i+1) == '*') {
-					if (boldPos < 0) {
-						boldPos = i;
+				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '*') {
+					if (markdown.length() > i + 2 && markdown.charAt(i + 2) == '*') {
+						if (boldItalicPos >= 0) {
+							italicPos = boldItalicPos;
+							boldPos = boldItalicPos + 1;
+							boldItalicPos = -1;
+						}
+						if (boldPos < 0 && italicPos >= 0) {
+							i++;
+						} else if (boldPos >= 0 && italicPos >= 0) {
+							if (boldPos < italicPos) {
+								decos.put(italicPos, new Deco(ITALIC, true));
+								decos.put(i, new Deco(ITALIC, false));
+								clearPos = italicPos;
+							} else {
+								decos.put(boldPos, new Deco(BOLD, true));
+								decos.put(i, new Deco(BOLD, false));
+								clearPos = boldPos;
+								i++;
+							}
+						} else if (boldPos < 0 && italicPos < 0) {
+							boldItalicPos = i;
+							i += 2;
+						} // if boldPos >= 0 && italicPos < 0, nothing to do (i += 0)
 					} else {
-						decos.put(boldPos, new Deco(BOLD, true));
-						decos.put(i, new Deco(BOLD, false));
-						clearPos = boldPos;
+						if (boldItalicPos >= 0) {
+							boldPos = boldItalicPos + 1;
+							italicPos = boldItalicPos;
+							boldItalicPos = -1;
+						}
+						if (boldPos < 0) {
+							boldPos = i;
+						} else {
+							decos.put(boldPos, new Deco(BOLD, true));
+							decos.put(i, new Deco(BOLD, false));
+							clearPos = boldPos;
+						}
+						i++;
 					}
-					i++;
 				} else {
+					if (boldItalicPos >= 0) {
+						italicPos = boldItalicPos + 2;
+						boldPos = boldItalicPos;
+						boldItalicPos = -1;
+					}
 					if (italicPos < 0) {
 						italicPos = i;
 					} else {
@@ -49,7 +85,7 @@ public class MarkdownConverter {
 				}
 				break;
 			case '~':
-				if (markdown.length() > i+1 && markdown.charAt(i+1) == '~') {
+				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '~') {
 					if (strikePos < 0) {
 						strikePos = i;
 					} else {
@@ -61,7 +97,7 @@ public class MarkdownConverter {
 				}
 				break;
 			case '_':
-				if (markdown.length() > i+1 && markdown.charAt(i+1) == '_') {
+				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '_') {
 					if (underPos < 0) {
 						underPos = i;
 					} else {
@@ -74,10 +110,14 @@ public class MarkdownConverter {
 				break;
 			}
 			if (clearPos > 0) {
-				if (clearPos <= boldPos && boldPos <= i) boldPos = -1;
-				if (clearPos <= italicPos && italicPos <= i) italicPos = -1;
-				if (clearPos <= strikePos && strikePos <= i) strikePos = -1;
-				if (clearPos <= underPos && underPos <= i) underPos = -1;
+				if (clearPos <= boldPos && boldPos <= i)
+					boldPos = -1;
+				if (clearPos <= italicPos && italicPos <= i)
+					italicPos = -1;
+				if (clearPos <= strikePos && strikePos <= i)
+					strikePos = -1;
+				if (clearPos <= underPos && underPos <= i)
+					underPos = -1;
 			}
 		}
 		StringBuilder resultString = new StringBuilder();
@@ -137,10 +177,11 @@ public class MarkdownConverter {
 		}
 		return resultString.toString();
 	}
-	
+
 	static class Deco {
 		final int mark;
 		final boolean start;
+
 		Deco(int mark, boolean start) {
 			this.mark = mark;
 			this.start = start;
