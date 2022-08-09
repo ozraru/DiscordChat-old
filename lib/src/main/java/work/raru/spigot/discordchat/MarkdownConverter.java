@@ -1,6 +1,7 @@
 package work.raru.spigot.discordchat;
 
-import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * I wrote this. But I can't read this :P
@@ -10,114 +11,47 @@ import java.util.HashMap;
  */
 public class MarkdownConverter {
 
-	private static final int BOLD = 1;
-	private static final int ITALIC = 2;
-	private static final int STRIKE = 3;
-	private static final int UNDER = 4;
+	private static final Pattern pattern = Pattern.compile("((\\*\\*\\*?[^§]+?\\*?\\*\\*)|(\\*(\\*\\*)?[^§]+?(\\*\\*)?\\*)|(~~[^§]+?~~)|(__[^§]+?__))");
+
+	final static char BOLD_C = 'l';
+	final static char ITALIC_C = 'o';
+	final static char STRIKE_C = 'm';
+	final static char UNDER_C = 'n';
+	
+	enum Kind {
+		BOLD(2,2,BOLD_C),
+		ITALIC(3,1,ITALIC_C),
+		STRIKE(6,2,STRIKE_C),
+		UNDER(7,2,UNDER_C);
+		
+		final int group;
+		final int length;
+		final char minecraft;
+		
+		Kind(int group, int length, char minecraft) {
+			this.group = group;
+			this.length = length;
+			this.minecraft = minecraft;
+		}
+	}
 
 	public static void main(String[] args) {
 		System.out.println(toMinecraft(args[0]));
 	}
 
 	static String toMinecraft(String markdown) {
-		int boldPos = -1;
-		int italicPos = -1;
-		int strikePos = -1;
-		int underPos = -1;
-		int boldItalicPos = -1;
-		HashMap<Integer, Deco> decos = new HashMap<Integer, Deco>();
-		for (int i = 0; i < markdown.length(); i++) {
-			int clearPos = -1;
-			switch (markdown.charAt(i)) {
-			case '*':
-				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '*') {
-					if (markdown.length() > i + 2 && markdown.charAt(i + 2) == '*') {
-						if (boldItalicPos >= 0) {
-							italicPos = boldItalicPos;
-							boldPos = boldItalicPos + 1;
-							boldItalicPos = -1;
-						}
-						if (boldPos < 0 && italicPos >= 0) {
-							i++;
-						} else if (boldPos >= 0 && italicPos >= 0) {
-							if (boldPos < italicPos) {
-								decos.put(italicPos, new Deco(ITALIC, true));
-								decos.put(i, new Deco(ITALIC, false));
-								clearPos = italicPos;
-							} else {
-								decos.put(boldPos, new Deco(BOLD, true));
-								decos.put(i, new Deco(BOLD, false));
-								clearPos = boldPos;
-								i++;
-							}
-						} else if (boldPos < 0 && italicPos < 0) {
-							boldItalicPos = i;
-							i += 2;
-						} // if boldPos >= 0 && italicPos < 0, nothing to do (i += 0)
-					} else {
-						if (boldItalicPos >= 0) {
-							boldPos = boldItalicPos + 1;
-							italicPos = boldItalicPos;
-							boldItalicPos = -1;
-						}
-						if (boldPos < 0) {
-							boldPos = i;
-						} else {
-							decos.put(boldPos, new Deco(BOLD, true));
-							decos.put(i, new Deco(BOLD, false));
-							clearPos = boldPos;
-						}
-						i++;
-					}
-				} else {
-					if (boldItalicPos >= 0) {
-						italicPos = boldItalicPos + 2;
-						boldPos = boldItalicPos;
-						boldItalicPos = -1;
-					}
-					if (italicPos < 0) {
-						italicPos = i;
-					} else {
-						decos.put(italicPos, new Deco(ITALIC, true));
-						decos.put(i, new Deco(ITALIC, false));
-						clearPos = italicPos;
-					}
-				}
-				break;
-			case '~':
-				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '~') {
-					if (strikePos < 0) {
-						strikePos = i;
-					} else {
-						decos.put(strikePos, new Deco(STRIKE, true));
-						decos.put(i, new Deco(STRIKE, false));
-						clearPos = strikePos;
-					}
-					i++;
-				}
-				break;
-			case '_':
-				if (markdown.length() > i + 1 && markdown.charAt(i + 1) == '_') {
-					if (underPos < 0) {
-						underPos = i;
-					} else {
-						decos.put(underPos, new Deco(UNDER, true));
-						decos.put(i, new Deco(UNDER, false));
-						clearPos = underPos;
-					}
-					i++;
-				}
+		String converted = markdown;
+		while (true) {
+			Matcher matcher = pattern.matcher(converted);
+			if (!matcher.find()) {
 				break;
 			}
-			if (clearPos > 0) {
-				if (clearPos <= boldPos && boldPos <= i)
-					boldPos = -1;
-				if (clearPos <= italicPos && italicPos <= i)
-					italicPos = -1;
-				if (clearPos <= strikePos && strikePos <= i)
-					strikePos = -1;
-				if (clearPos <= underPos && underPos <= i)
-					underPos = -1;
+			for (Kind kind : Kind.values()) {
+				String matched = matcher.group(kind.group);
+				if (matched != null && matched.length() != 0) {
+					converted = matcher.replaceFirst("§" + kind.minecraft + matched.substring(kind.length, matched.length() - kind.length) + "§" + kind.minecraft);
+					break;
+				}
 			}
 		}
 		StringBuilder resultString = new StringBuilder();
@@ -125,66 +59,66 @@ public class MarkdownConverter {
 		boolean italic = false;
 		boolean strike = false;
 		boolean under = false;
-		for (int i = 0; i < markdown.length(); i++) {
-			if (decos.containsKey(i)) {
-				switch (decos.get(i).mark) {
-				case BOLD:
-					bold = decos.get(i).start;
+		for (int i = 0; i < converted.length(); i++) {
+			if (converted.charAt(i) == '§' && converted.length() > i+1) {
+				boolean reset = false;
+				switch (converted.charAt(i+1)) {
+				case BOLD_C:
+					bold = !bold;
 					if (bold) {
-						resultString.append("§l");
+						resultString.append("§"+BOLD_C);
+					} else {
+						reset = true;
 					}
+					i++;
 					break;
-				case ITALIC:
-					italic = decos.get(i).start;
+				case ITALIC_C:
+					italic = !italic;
 					if (italic) {
-						resultString.append("§o");
+						resultString.append("§"+ITALIC_C);
+					} else {
+						reset = true;
 					}
+					i++;
 					break;
-				case STRIKE:
-					strike = decos.get(i).start;
+				case STRIKE_C:
+					strike = !strike;
 					if (strike) {
-						resultString.append("§m");
+						resultString.append("§"+STRIKE_C);
+					} else {
+						reset = true;
 					}
+					i++;
 					break;
-				case UNDER:
-					under = decos.get(i).start;
+				case UNDER_C:
+					under = !under;
 					if (under) {
-						resultString.append("§n");
+						resultString.append("§"+UNDER_C);
+					} else {
+						reset = true;
 					}
+					i++;
 					break;
 				}
-				if (!decos.get(i).start) {
+				if (reset) {
 					resultString.append("§r");
 					if (bold) {
-						resultString.append("§l");
+						resultString.append("§"+BOLD_C);
 					}
 					if (italic) {
-						resultString.append("§o");
+						resultString.append("§"+ITALIC_C);
 					}
 					if (strike) {
-						resultString.append("§m");
+						resultString.append("§"+STRIKE_C);
 					}
 					if (under) {
-						resultString.append("§n");
+						resultString.append("§"+UNDER_C);
 					}
 				}
-				if (decos.get(i).mark != ITALIC) {
-					i++;
-				}
 			} else {
-				resultString.append(markdown.charAt(i));
+				resultString.append(converted.charAt(i));
 			}
 		}
 		return resultString.toString();
-	}
-
-	static class Deco {
-		final int mark;
-		final boolean start;
-
-		Deco(int mark, boolean start) {
-			this.mark = mark;
-			this.start = start;
-		}
 	}
 }
