@@ -35,3 +35,5 @@ database:
   # url: "jdbc:postgresql://localhost/DiscordChat" # PostgreSQL
   # user: "postgres_user"
   # password: "pastgres_password"
+# This may increase log
+debug: false

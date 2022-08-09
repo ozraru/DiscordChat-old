@@ -1,5 +1,7 @@
 package work.raru.spigot.discordchat;
 
+import java.util.logging.Level;
+
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -16,6 +18,10 @@ public class ConfigManager {
 		Main.instance.reloadConfig();
 		config = Main.instance.getConfig();
 		DiscordMessage.reloadConfig();
+	}
+	
+	static boolean getDebug() {
+		return config.getBoolean("debug");
 	}
 	
 	static String getToken() {

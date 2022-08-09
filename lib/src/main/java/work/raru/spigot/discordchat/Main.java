@@ -19,20 +19,26 @@ public class Main extends JavaPlugin {
 			instance = this;
 			saveDefaultConfig();
 			ConfigManager.init();
+			Logger.debug("Loading DB...");
 			DatabaseManager.init();
+			Logger.debug("Starting JDA...");
 			startJDA();
+			Logger.debug("Setuping Minecraft commands...");
 			MinecraftCommand mcCommand = new MinecraftCommand();
 			getCommand("discordchat").setExecutor(mcCommand);
 			getCommand("discordchat").setTabCompleter(mcCommand);
 			getServer().getPluginManager().registerEvents(new MinecraftChat(), this);
 			getServer().getPluginManager().registerEvents(new MinecraftEventHandler(), this);
+			Logger.debug("Waiting for JDA...");
 			jda.awaitReady();
+			Logger.debug("JDA ready");
 			DiscordMessage.getChannel().sendMessage("Plugin enabled").queue();
 			getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 				public void run() {
 					DiscordMessage.getChannel().sendMessage("Server started").queue();
 				}
 			});
+			getLogger().info("DiscordChat enabled");
 		} catch (Exception e) {
 			e.printStackTrace();
 			getLogger().severe("Unknown error occured in enabling DiscordChat. disabling...");

@@ -14,7 +14,9 @@ public class DatabaseManager {
 	static Connection conn;
 
 	static void init() throws SQLException {
+		Logger.debug("Initing DB connection...");
 		initConnection();
+		Logger.debug("Init Table...");
 		String linkListTableName = ConfigManager.getDatabaseTablePrefix() + "LinkList";
 		String linkTokenTableName = ConfigManager.getDatabaseTablePrefix() + "LinkToken";
 		initTable(linkListTableName + "(" + "minecraft CHAR(36) NOT NULL," + "discord BIGINT NOT NULL)");
@@ -38,16 +40,23 @@ public class DatabaseManager {
 	}
 
 	static void initConnection() throws SQLException {
+		Logger.debug("Start init DB...");
 		try {
 			switch (ConfigManager.getDatabaseType()) {
 			case "postgresql":
+				Logger.debug("Initing postgres...");
 				Class.forName("org.postgresql.Driver");
+				Logger.debug("Found JDBC...");
 				conn = DriverManager.getConnection(ConfigManager.getDatabaseUrl(), ConfigManager.getDatabaseUser(),
 						ConfigManager.getDatabasePassword());
+				Logger.debug("Got connection...");
 				break;
 			case "sqlite":
+				Logger.debug("Initing SQLite...");
 				Class.forName("org.sqlite.JDBC");
+				Logger.debug("Found JDBC...");
 				conn = DriverManager.getConnection(ConfigManager.getDatabaseUrl());
+				Logger.debug("Got connection...");
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown database type");
@@ -56,7 +65,9 @@ public class DatabaseManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		Logger.debug("Init connection done...");
 		conn.setAutoCommit(false);
+		Logger.debug("End init DB");
 	}
 
 	static void initTable(String tableSettings) throws SQLException {
