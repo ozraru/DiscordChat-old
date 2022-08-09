@@ -1,7 +1,10 @@
 package work.raru.spigot.discordchat;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,6 +23,8 @@ public class DiscordMessage extends ListenerAdapter {
 	static long channelID;
 	static String prefix;
 	static private GuildMessageChannel channel;
+	
+	static final Pattern emojiPattern = Pattern.compile("[a-zA-Z0-9_]{2,}");
 
 	DiscordMessage() {
 		reloadConfig();
@@ -59,7 +64,8 @@ public class DiscordMessage extends ListenerAdapter {
 				break;
 			}
 		} else {
-			if (event.isFromGuild() && !event.isWebhookMessage() && !event.getAuthor().equals(event.getJDA().getSelfUser())) {
+			if (event.isFromGuild() && !event.isWebhookMessage()
+					&& !event.getAuthor().equals(event.getJDA().getSelfUser())) {
 				MinecraftChat.fromDiscord(event.getMember(), event.getMessage().getContentDisplay(),
 						!event.getMessage().getAttachments().isEmpty(), event.getMessage().getReferencedMessage());
 			}
@@ -110,34 +116,25 @@ public class DiscordMessage extends ListenerAdapter {
 			webhook.setAvatarUrl(null);
 		}
 		String[] splitMessage = message.split(":");
-		StringBuilder content = new StringBuilder(splitMessage[0]);
+		String result = message;
+		HashSet<String> converted = new HashSet<String>();
 		for (int i = 1; i < splitMessage.length; i++) {
-			List<RichCustomEmoji> emojis = getChannel().getJDA().getEmojisByName(splitMessage[i], true);
+			if (!converted.add(splitMessage[i])) {
+				continue;
+			}
+			Matcher matcher = emojiPattern.matcher(splitMessage[i]);
+			if (!matcher.matches()) {
+				continue;
+			}
+			List<RichCustomEmoji> emojis = getChannel().getGuild().getEmojisByName(splitMessage[i], true);
 			if (emojis.isEmpty()) {
-				content.append(":" + splitMessage[i]);
-				if (i == splitMessage.length - 1 && message.endsWith(":")) {
-					content.append(":");
-				}
 				continue;
 			}
-			if (emojis.size() == 1) {
-				content.append(emojis.get(0).getAsMention());
-				continue;
-			}
-			boolean selected = false;
-			for (RichCustomEmoji emoji : emojis) {
-				if (emoji.getGuild().equals(getChannel().getGuild())) {
-					content.append(emoji.getAsMention());
-					selected = true;
-					break;
-				}
-			}
-			if (!selected) {
-				content.append(emojis.get(0).getAsMention());
-			}
+
+			result = result.replaceAll(":"+splitMessage[i]+":", emojis.get(0).getAsMention());
 		}
 
-		webhook.setContent(content.toString());
+		webhook.setContent(result);
 		webhook.setTts(false);
 		ThreadManager.getInstance().execute(webhook);
 	}
