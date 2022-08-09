@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 
 public class Main extends JavaPlugin {
 
@@ -49,7 +50,9 @@ public class Main extends JavaPlugin {
 
 	void startJDA() throws LoginException {
 		try {
-			jda = JDABuilder.createDefault(ConfigManager.getToken()).build();
+			JDABuilder jdaBuilder = JDABuilder.createDefault(ConfigManager.getToken());
+			jdaBuilder.enableIntents(GatewayIntent.MESSAGE_CONTENT);
+			jda = jdaBuilder.build();
 			jda.addEventListener(new DiscordMessage());
 		} catch (LoginException e) {
 			getLogger().severe("Discord login failed. Please check token.");
